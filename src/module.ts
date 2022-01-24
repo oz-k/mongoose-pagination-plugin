@@ -22,4 +22,5 @@ declare module 'mongoose' {
         collection?: string,
         skipInit?: boolean
     ): PaginationModel<T>
+    export const PaginationModel: PaginationModel<any>;
 }
