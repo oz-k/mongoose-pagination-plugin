@@ -1,14 +1,23 @@
 {
-  "name": "mongoose-pagination-plugin",
+  "name": "@a-part/mongoose-pagination-plugin",
   "version": "1.0.0",
-  "description": "",
+  "description": "mongoose전용 페이지네이션 플러그인",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
     "build": "rm -rf dist && tsc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "oz-k",
+    "email": "cem0614@naver.com",
+    "url": "https://github.com/oz-k"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/oz-k/mongoose-pagination-plugin",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/oz-k/mongoose-pagination-plugin"
+  },
   "dependencies": {
     "mongoose": "^6.1.7"
   },
