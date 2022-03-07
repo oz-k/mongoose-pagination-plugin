@@ -24,7 +24,6 @@ export async function offsetPagination<T extends DocumentWithId>(
     const model = this as Model<T>;
     const page = paginationOption.page >= 1 ? paginationOption.page : 1;
     const limit = paginationOption.limit;
-
     return (await model.aggregate<IOffsetPaginatedResult<Omit<T, keyof DocumentWithId>>>([
         ...filterQueries,
         {
