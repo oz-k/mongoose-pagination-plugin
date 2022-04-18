@@ -1,5 +1,5 @@
-import { Document, model, PaginationModel, Schema, Types } from "mongoose";
-import { mongoosePaginationPlugin } from "src";
+import { Document, model, Schema, Types } from "mongoose";
+import { mongoosePaginationPlugin, PaginationModel } from "src";
 
 export const User = new Schema<UserDocument>({
     name: {type: String},
@@ -10,4 +10,4 @@ export interface UserDocument extends Document<Types.ObjectId> {
     name: string;
     gender: 'male' | 'female';
 }
-export const UserModel: PaginationModel<UserDocument> = model('User', User);
+export const UserModel = model('User', User) as PaginationModel<UserDocument>;

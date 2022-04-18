@@ -1,12 +1,12 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
-import mongoose, { connect, disconnect } from "mongoose";
-import { mongoosePaginationPlugin, IOffsetPaginationOption } from "src";
-import { UserDocument, UserModel } from "./schema/user.schema";
+import { connect, disconnect } from "mongoose";
+import { OffsetPaginationOption } from 'src/offset-pagination';
 import { PostDocument, PostModel } from "./schema/post.schema";
+import { UserDocument, UserModel } from "./schema/user.schema";
 
 describe('offset-pagination', () => {
     let mongod: MongoMemoryServer;
-    let defaultOption: IOffsetPaginationOption;
+    let defaultOption: OffsetPaginationOption;
     let users: UserDocument[] = [];
     let posts: PostDocument[] = [];
 
@@ -20,6 +20,9 @@ describe('offset-pagination', () => {
             page: 1,
             limit: 10
         }
+
+        users = [];
+        posts = [];
 
         for(let i=0; i<123; i++) {
             users.push(await new UserModel({name: `user${i}`, gender: Math.random() < 0.5 ? 'male' : 'female'}).save());
@@ -37,8 +40,8 @@ describe('offset-pagination', () => {
         await mongod?.stop();
     });
 
-    it('해당 페이지의 데이터 반환', async () => {
-        const { items } = await UserModel.offsetPagination(defaultOption);
+    it('해당 페이지의 데이터를 반환해야함', async () => {
+        const { items } = (await UserModel.offsetPagination(defaultOption))[0];
 
         items.forEach((user, idx) => {
             idx = idx+(defaultOption.page-1)*defaultOption.limit;
@@ -47,8 +50,8 @@ describe('offset-pagination', () => {
         });
     });
 
-    it('총 데이터 개수 반환', async () => {
-        const { offsetPaginatedInfo } = await UserModel.offsetPagination(defaultOption);
+    it('총 데이터 개수를 반환해야함', async () => {
+        const { offsetPaginatedInfo } = (await UserModel.offsetPagination(defaultOption))[0];
 
         expect(offsetPaginatedInfo.totalCount).toBe(123);
     });

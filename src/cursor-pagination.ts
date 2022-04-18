@@ -1,95 +1,86 @@
-// import { Types, PipelineStage, Model, SortValues, DocumentWithId } from "mongoose";
+import { Aggregate, Document, Model, PipelineStage, Types } from "mongoose";
+import { DocumentWithId } from './module';
+export interface CursorPaginatedInfo {
+    totalCount: number;
+}
 
-// export enum SortValue {
-//     asc = '$gt',
-//     desc = '$lt'
-// }
+export interface CursorPaginatedResult<T> {
+    cursorPaginatedInfo: CursorPaginatedInfo;
+    items: T[];
+}
 
-// export interface ICursorPaginationOption<T, K extends keyof T> {
-//     //가져올 아이템 개수
-//     limit: number;
 
-//     //커서 값
-//     cursor?: T[K];
+type Schema<T extends Document> = Omit<T, keyof Omit<Document, '_id'>>;
+export type CursorPaginationOptions<T extends Document> = {
+    [K in keyof Schema<T>]: {
+        skipCursor: boolean;
+        limit: number;
+        paginationField: K;
+        cursor?: {_id: Types.ObjectId} & {[key in K]: T[K]};
+    };
+}[keyof Schema<T>];
 
-//     //정렬할 필드명이 _id가 아닐 경우 필요한 서브커서
-//     subCursor?: K extends '_id' ? null : Types.ObjectId;
+export function cursorPagination<T extends DocumentWithId>(
+    paginationOptions: CursorPaginationOptions<T>,
+    filterQueries: PipelineStage[] = [],
+): Aggregate<CursorPaginatedResult<Omit<T, keyof DocumentWithId>>[]> {
+    const model = this as Model<T>;
+    const paginationField = paginationOptions.paginationField;
+    const isLimitPositive = paginationOptions.limit > 0;
+    const notSkipCursor = !paginationOptions.skipCursor;
+    // limit이 양수면 grater, 아니면 less로 하고 커서를 스킵하지 않는다면 operator에 equal 조건을 추가해 커서도 포함하게함
+    const comparisonOperator = `$${isLimitPositive ? 'g' : 'l'}t${notSkipCursor ? 'e' : ''}`;
+    const sortValue = isLimitPositive ? 1 : -1;
+    // 커서가 존재하고 스킵하겠다고할때만 스킵되게
+    const cursorQuery = paginationOptions.cursor
+        ? paginationField === '_id'
+            // TODO: 현재는 1개의 subField만 지원하지만 추후 늘려도됨
+            // _id가 넘치거나 같으면(커서포함) 검색됨
+            ? {_id: {[comparisonOperator]: paginationOptions.cursor._id}}
+            : {
+                // 페이징필드가 넘치거나 페이징필드는 같은데 _id가 넘치거나 같으면(커서포함) 검색됨
+                $or: [
+                    // 스킵하지않으면 equal 조건이 추가되어있어 equal을 제거하기위해 slice함(equal을 제거하는이유는 아래 or문에서 equal검사를 하기때문)
+                    {[paginationField]: {
+                        [
+                            notSkipCursor 
+                                ? comparisonOperator.slice(0, -1)
+                                : comparisonOperator
+                        ]: paginationOptions.cursor[paginationField]}},
+                    {
+                        _id: {[comparisonOperator]: paginationOptions.cursor._id},
+                        [paginationField]: {$eq: paginationOptions.cursor[paginationField]},
+                    },
+                ],
+            }
+        : {};
 
-//     //정렬할 필드명
-//     paginator: K;
-    
-//     //정렬기준
-//     sort: SortValue;
-
-//     //커서기준 다음걸 가져올건지 이전걸 가져올건지 여부
-//     isNext: boolean;
-// }
-
-// //페이지정보타입
-// export interface ICursorPaginatedInfo<C> {
-//     //시작커서 값
-//     startCursor: C;
-//     //마지막커서 값
-//     endCursor: C;
-
-//     //이전페이지 존재 여부
-//     hasPrevPage: boolean;
-//     //다음페이지 존재 여부
-//     hasNextPage: boolean;
-// }
-
-// //페이징처리 리턴타입
-// export interface ICursorPaginatedResult<T, C> {
-//     cursorPaginatedInfo: ICursorPaginatedInfo<C>;
-//     items: T[];
-// }
-
-// export type CursorFacetValueType = Exclude<PipelineStage.Facet['$facet'][string], PipelineStage.Sort>;
-
-// /**
-//  * 커서기반 페이징
-//  * @param paginationOption 페이징 옵션
-//  * @param filterQueries 필터옵션
-//  * @returns 페이징처리된 아이템
-//  */
-// export function cursorPagination<T extends DocumentWithId, K extends keyof Omit<T, keyof DocumentWithId>>(
-//     paginationOption: ICursorPaginationOption<Omit<T, keyof DocumentWithId>, K>, 
-//     filterQueries: CursorFacetValueType = [],
-// ): ICursorPaginatedResult<Omit<T, keyof DocumentWithId>, Omit<T, keyof DocumentWithId>[K]> {
-//     const model = this as Model<T>;
-
-//     if(paginationOption.paginator === '_id' && )
-
-//     const sortQuery = {
-//         [paginationOption.paginator]: paginationOption.sort,
-//         _id: paginationOption.sort
-//     }
-    
-//     const cursorQuery = {
-//         ...filterQueries,
-//         $or: [
-//             {
-//                 //커서기준 다음 혹은 이전값을 추림
-//                 [paginationOption.paginator]: {
-//                     [SortValue[paginationOption.sort]]: paginationOption.cursor ? 
-//                 }
-//             },
-//             {
-//                 //커서와 같은 경우 _id를 기준으로 추림
-//                 [paginationOption.paginator]: {
-//                     $eq: paginationOption.cursor
-//                 },
-//                 _id: {
-//                     [SortValue[paginationOption.sort]]: paginationOption.cursor
-//                 }
-//             }
-//         ]
-//     }
-// }
-
-// class A {
-//     _id: Types.ObjectId;
-//     createdAt: Date;
-// }
-// type ADoc = A & DocumentWithId;
-// cursorPagination<ADoc, >({limit: 1, paginator: '_id', sort: "asc", cursor: '', next: true})
+    return model.aggregate([
+        ...filterQueries,
+        {
+            $facet: {
+                items: [
+                    {$match: cursorQuery},
+                    {$sort: {[paginationField as string]: sortValue, _id: sortValue}},
+                    {$limit: Math.abs(paginationOptions.limit)},
+                ],
+                totalCount: [{$count: 'count'}],
+            },
+        },
+        {
+            $project: {
+                items: {
+                    $cond: {
+                        // 역으로 가져올경우 배열을 반대로바꿔 concat하기 편하게
+                        if: !isLimitPositive,
+                        then: {$reverseArray: '$items'},
+                        else: '$items',
+                    },
+                },
+                cursorPaginatedInfo: {
+                    totalCount: {$ifNull: [{$first: '$totalCount.count'}, 0]},
+                },
+            },
+        },
+    ]);
+}

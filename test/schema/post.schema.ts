@@ -1,5 +1,5 @@
-import { Schema, Types, model, Document, PaginationModel } from "mongoose";
-import { mongoosePaginationPlugin } from "src";
+import { Document, model, Schema, Types } from "mongoose";
+import { mongoosePaginationPlugin, PaginationModel } from "src";
 import { UserDocument } from "./user.schema";
 
 export const Post = new Schema<PostDocument>({
@@ -11,4 +11,4 @@ export interface PostDocument extends Document<Types.ObjectId> {
     title: string;
     writer: UserDocument;
 }
-export const PostModel: PaginationModel<PostDocument> = model('Post', Post);
+export const PostModel = model('Post', Post) as PaginationModel<PostDocument>;
