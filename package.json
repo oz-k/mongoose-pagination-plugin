@@ -1,6 +1,6 @@
 {
     "name": "@a-part/mongoose-pagination-plugin",
-    "version": "2.0.0",
+    "version": "2.0.5",
     "description": "mongoose전용 페이지네이션 플러그인",
     "scripts": {
         "test": "jest",
@@ -8,7 +8,7 @@
     },
     "author": {
         "name": "oz-k",
-        "email": "cem0614@naver.com",
+        "email": "oz.k0614@gmail.com",
         "url": "https://github.com/oz-k"
     },
     "license": "MIT",

@@ -1,5 +1,6 @@
-import { Aggregate, Document, Model, PipelineStage, Types } from "mongoose";
+import { Aggregate, Model, PipelineStage, Types } from "mongoose";
 import { DocumentWithId } from './module';
+
 export interface CursorPaginatedInfo {
     totalCount: number;
 }
@@ -9,19 +10,17 @@ export interface CursorPaginatedResult<T> {
     items: T[];
 }
 
-
-type Schema<T extends Document> = Omit<T, keyof Omit<Document, '_id'>>;
-export type CursorPaginationOptions<T extends Document> = {
-    [K in keyof Schema<T>]: {
-        skipCursor: boolean;
-        limit: number;
-        paginationField: K;
-        cursor?: {_id: Types.ObjectId} & {[key in K]: T[K]};
+export interface CursorPaginationOptions<F extends string> {
+    skipCursor: boolean;
+    limit: number;
+    paginationField: F | '_id';
+    cursor?: {_id: Types.ObjectId} & {
+        [key in F]?: string | number | Date | boolean | Types.ObjectId;
     };
-}[keyof Schema<T>];
+};
 
-export function cursorPagination<T extends DocumentWithId>(
-    paginationOptions: CursorPaginationOptions<T>,
+export function cursorPagination<T extends DocumentWithId, F extends string = '_id'>(
+    paginationOptions: CursorPaginationOptions<F>,
     filterQueries: PipelineStage[] = [],
 ): Aggregate<CursorPaginatedResult<Omit<T, keyof DocumentWithId>>[]> {
     const model = this as Model<T>;
@@ -29,7 +28,7 @@ export function cursorPagination<T extends DocumentWithId>(
     const isLimitPositive = paginationOptions.limit > 0;
     const notSkipCursor = !paginationOptions.skipCursor;
     // limit이 양수면 grater, 아니면 less로 하고 커서를 스킵하지 않는다면 operator에 equal 조건을 추가해 커서도 포함하게함
-    const comparisonOperator = `$${isLimitPositive ? 'g' : 'l'}t${notSkipCursor ? 'e' : ''}`;
+    const comparisonOperator = `${isLimitPositive ? '$gt' : '$lt'}${notSkipCursor ? 'e' : ''}`;
     const sortValue = isLimitPositive ? 1 : -1;
     // 커서가 존재하고 스킵하겠다고할때만 스킵되게
     const cursorQuery = paginationOptions.cursor

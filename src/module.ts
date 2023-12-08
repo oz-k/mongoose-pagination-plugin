@@ -9,8 +9,8 @@ export interface PaginationModel<T extends DocumentWithId> extends Model<T> {
         filterQueries?: PipelineStage[],
     ): Aggregate<OffsetPaginatedResult<Omit<T, keyof Omit<DocumentWithId, '_id'>>>[]>;
 
-    cursorPagination(
-        paginationOption: CursorPaginationOptions<T>, 
+    cursorPagination<F extends string = '_id'>(
+        paginationOption: CursorPaginationOptions<F>, 
         filterQueries?: PipelineStage[],
     ): Aggregate<CursorPaginatedResult<Omit<T, keyof Omit<DocumentWithId, '_id'>>>[]>;
 }
